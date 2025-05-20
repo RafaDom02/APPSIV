@@ -13,10 +13,17 @@ class FRCNN_FPN(FasterRCNN):
 
         self.roi_heads.nms_thresh = nms_thresh
 
-    def detect(self, img):
+    def detect(self, img, conf_thresh=0.5):
         device = list(self.parameters())[0].device
         img = img.to(device)
 
         detections = self(img)[0]
+        
+        boxes = detections['boxes'].detach().cpu()
+        scores = detections['scores'].detach().cpu()
+        
+        mask = scores > conf_thresh
+        filtered_boxes = boxes[mask]
+        filtered_scores = scores[mask]
 
-        return detections['boxes'].detach().cpu(), detections['scores'].detach().cpu()
+        return filtered_boxes, filtered_scores
